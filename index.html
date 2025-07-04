@@ -1,0 +1,1710 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Campeonato Municipal de Ciclismo Valderil José Reis</title>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        
+        h1, h2 {
+            text-align: center;
+            color: #333;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        
+        .filters {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 15px;
+            margin-bottom: 20px;
+            padding: 15px;
+            background: #f0f0f0;
+            border-radius: 5px;
+        }
+        
+        .filter-group {
+            flex: 1;
+            min-width: 200px;
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+        
+        select, input {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            box-sizing: border-box;
+        }
+        
+        button {
+            padding: 10px 15px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: background-color 0.3s;
+        }
+        
+        button:hover {
+            background-color: #45a049;
+        }
+        
+        .admin-panel {
+            margin-top: 30px;
+            padding: 20px;
+            background-color: #e9e9e9;
+            border-radius: 5px;
+            display: none;
+        }
+        
+        .tabs {
+            display: flex;
+            margin-bottom: 20px;
+            border-bottom: 1px solid #ddd;
+        }
+        
+        .tab {
+            padding: 10px 20px;
+            cursor: pointer;
+            background-color: #f1f1f1;
+            border: 1px solid #ddd;
+            border-bottom: none;
+            border-radius: 5px 5px 0 0;
+            margin-right: 5px;
+        }
+        
+        .tab.active {
+            background-color: #4CAF50;
+            color: white;
+        }
+        
+        .tab-content {
+            display: none;
+            padding: 20px;
+            border: 1px solid #ddd;
+            border-top: none;
+            border-radius: 0 0 5px 5px;
+        }
+        
+        .tab-content.active {
+            display: block;
+        }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+        
+        th, td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid #ddd;
+        }
+        
+        th {
+            background-color: #4CAF50;
+            color: white;
+        }
+        
+        tr:nth-child(even) {
+            background-color: #f2f2f2;
+        }
+        
+        .form-group {
+            margin-bottom: 15px;
+        }
+        
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+        }
+        
+        .form-group input, .form-group select {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            box-sizing: border-box;
+        }
+        
+        .login-btn {
+            background-color: #4CAF50;
+            color: white;
+            padding: 10px 15px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: bold;
+            margin: 20px auto;
+            display: block;
+        }
+        
+        .logout-btn {
+            background-color: #f44336;
+        }
+        
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+            background-color: rgba(0,0,0,0.4);
+        }
+        
+        .modal-content {
+            background-color: #fefefe;
+            margin: 5% auto;
+            padding: 20px;
+            border: 1px solid #888;
+            width: 90%;
+            max-width: 600px;
+            border-radius: 5px;
+        }
+        
+        .close {
+            color: #aaa;
+            float: right;
+            font-size: 28px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+        
+        .close:hover {
+            color: black;
+        }
+        
+        .loading-spinner {
+            display: none;
+            border: 4px solid rgba(0, 0, 0, 0.1);
+            border-radius: 50%;
+            border-top: 4px solid #3498db;
+            width: 30px;
+            height: 30px;
+            animation: spin 1s linear infinite;
+            margin: 20px auto;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        .ranking-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+        
+        .logo-container {
+            text-align: center;
+            margin: 20px 0;
+        }
+        
+        .logo-container img {
+            max-width: 200px;
+            height: auto;
+        }
+        
+        .action-btn {
+            padding: 5px 10px;
+            margin: 0 5px;
+            font-size: 12px;
+        }
+        
+        .edit-btn {
+            background-color: #2196F3;
+        }
+        
+        .delete-btn {
+            background-color: #f44336;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Campeonato Municipal de Ciclismo Valderil José Reis</h1>
+        <h2>Ranking Oficial - R.U.C.</h2>
+        
+        <div class="logo-container">
+            <img src="ruc.png" alt="Logo R.U.C.">
+        </div>
+        
+        <div class="filters">
+            <div class="filter-group">
+                <label for="year">Ano:</label>
+                <select id="year">
+                    <option value="2024">2024</option>
+                    <option value="2025">2025</option>
+                </select>
+            </div>
+            <div class="filter-group">
+                <label for="gender">Gênero:</label>
+                <select id="gender">
+                    <option value="all">Todos</option>
+                    <option value="male">Masculino</option>
+                    <option value="female">Feminino</option>
+                </select>
+            </div>
+            <div class="filter-group">
+                <label for="category">Categoria:</label>
+                <select id="category">
+                    <option value="all">Todas</option>
+		    <!-- Categorias serão preenchidas dinamicamente -->
+                </select>
+            </div>
+            <div class="filter-group">
+                <label for="age">Idade:</label>
+                <select id="age">
+                    <option value="all">Todas</option>
+                    <option value="sub40">Sub40</option>
+                    <option value="sub50">Sub50</option>
+                    <option value="sub60">Sub60</option>
+                    <option value="60+">60+</option>
+                </select>
+            </div>
+            <div class="filter-group" style="align-self: flex-end;">
+                <button id="apply-filters">Aplicar Filtros</button>
+            </div>
+        </div>
+        
+        <div class="ranking-header">
+            <h3 id="ranking-title">Ranking Geral</h3>
+            <button id="login-btn" class="login-btn">Login Admin</button>
+        </div>
+        
+        <div id="ranking-table">
+            <!-- Ranking será carregado dinamicamente -->
+            <table>
+                <thead>
+                    <tr>
+                        <th>Posição</th>
+                        <th>Atleta</th>
+                        <th>Categoria</th>
+                        <th>Pontos</th>
+                        <th>Provas</th>
+                    </tr>
+                </thead>
+                <tbody id="ranking-body">
+                    <!-- Dados serão carregados dinamicamente -->
+                </tbody>
+            </table>
+        </div>
+        
+        <div class="admin-panel" id="admin-panel">
+            <h2>Painel Administrativo</h2>
+            
+            <div class="tabs">
+                <div class="tab active" data-tab="athletes">Atletas</div>
+                <div class="tab" data-tab="races">Provas</div>
+                <div class="tab" data-tab="results">Resultados</div>
+                <div class="tab" data-tab="adjustments">Ajustes</div>
+                <button id="logout-btn" class="logout-btn">Logout</button>
+            </div>
+            
+            <div id="athletes-tab" class="tab-content active">
+                <h3>Cadastrar Atleta</h3>
+                <div class="form-group">
+                    <label for="athlete-name">Nome Completo:</label>
+                    <input type="text" id="athlete-name" required>
+                </div>
+                <div class="form-group">
+                    <label for="athlete-gender">Gênero:</label>
+                    <select id="athlete-gender" required>
+                        <option value="">Selecione</option>
+                        <option value="male">Masculino</option>
+                        <option value="female">Feminino</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="athlete-category">Categoria:</label>
+                    <select id="athlete-category" required>
+                        <!-- Categorias serão preenchidas dinamicamente -->
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="athlete-birthdate">Data de Nascimento:</label>
+                    <input type="date" id="athlete-birthdate" required>
+                </div>
+                <button id="save-athlete">Salvar Atleta</button>
+                
+                <h3 style="margin-top: 30px;">Atletas Cadastrados</h3>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Nome</th>
+                            <th>Gênero</th>
+                            <th>Categoria</th>
+                            <th>Idade</th>
+                            <th>Ações</th>
+                        </tr>
+                    </thead>
+                    <tbody id="athletes-list">
+                        <!-- Atletas serão carregados dinamicamente -->
+                    </tbody>
+                </table>
+            </div>
+            
+            <div id="races-tab" class="tab-content">
+                <h3>Cadastrar Prova</h3>
+                <div class="form-group">
+                    <label for="race-name">Nome da Prova:</label>
+                    <input type="text" id="race-name" required>
+                </div>
+                <div class="form-group">
+                    <label for="race-date">Data da Prova:</label>
+                    <input type="date" id="race-date" required>
+                </div>
+                <button id="save-race">Salvar Prova</button>
+                
+                <h3 style="margin-top: 30px;">Provas Cadastradas</h3>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Nome</th>
+                            <th>Data</th>
+                            <th>Ações</th>
+                        </tr>
+                    </thead>
+                    <tbody id="races-list">
+                        <!-- Provas serão carregadas dinamicamente -->
+                    </tbody>
+                </table>
+            </div>
+            
+            <div id="results-tab" class="tab-content">
+                <h3>Cadastrar Resultado</h3>
+                <div class="form-group">
+                    <label for="result-race">Prova:</label>
+                    <select id="result-race" required>
+                        <option value="">Selecione uma prova</option>
+                        <!-- Provas serão preenchidas dinamicamente -->
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="result-athlete">Atleta:</label>
+                    <select id="result-athlete" required>
+                        <option value="">Selecione um atleta</option>
+                        <!-- Atletas serão preenchidos dinamicamente -->
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="result-category">Categoria:</label>
+                    <input type="text" id="result-category" readonly>
+                </div>
+                <div class="form-group">
+                    <label for="result-position">Colocação:</label>
+                    <input type="number" id="result-position" min="1" max="10" required>
+                </div>
+                <button id="save-result">Salvar Resultado</button>
+                
+                <h3 style="margin-top: 30px;">Resultados Cadastrados</h3>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Prova</th>
+                            <th>Atleta</th>
+                            <th>Categoria</th>
+                            <th>Colocação</th>
+                            <th>Pontos</th>
+                            <th>Ações</th>
+                        </tr>
+                    </thead>
+                    <tbody id="results-list">
+                        <!-- Resultados serão carregados dinamicamente -->
+                    </tbody>
+                </table>
+            </div>
+            
+            <div id="adjustments-tab" class="tab-content">
+                <h3>Ajustes</h3>
+                <div class="form-group">
+                    <label for="adjustment-type">Tipo de Registro:</label>
+                    <select id="adjustment-type">
+                        <option value="">Selecione</option>
+                        <option value="athlete">Atleta</option>
+                        <option value="race">Prova</option>
+                        <option value="result">Resultado</option>
+                    </select>
+                </div>
+                
+                <div id="athlete-adjustment" style="display: none;">
+                    <h4>Editar/Excluir Atleta</h4>
+                    <div class="form-group">
+                        <label for="select-athlete">Selecione o Atleta:</label>
+                        <select id="select-athlete">
+                            <option value="">Selecione um atleta</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="edit-athlete-name">Nome Completo:</label>
+                        <input type="text" id="edit-athlete-name">
+                    </div>
+                    <div class="form-group">
+                        <label for="edit-athlete-gender">Gênero:</label>
+                        <select id="edit-athlete-gender">
+                            <option value="">Selecione</option>
+                            <option value="male">Masculino</option>
+                            <option value="female">Feminino</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="edit-athlete-category">Categoria:</label>
+                        <select id="edit-athlete-category">
+                            <!-- Categorias serão preenchidas dinamicamente -->
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="edit-athlete-birthdate">Data de Nascimento:</label>
+                        <input type="date" id="edit-athlete-birthdate">
+                    </div>
+                    <button id="update-athlete" class="action-btn edit-btn">Atualizar Atleta</button>
+                    <button id="delete-athlete" class="action-btn delete-btn">Excluir Atleta</button>
+                </div>
+                
+                <div id="race-adjustment" style="display: none;">
+                    <h4>Editar/Excluir Prova</h4>
+                    <div class="form-group">
+                        <label for="select-race">Selecione a Prova:</label>
+                        <select id="select-race">
+                            <option value="">Selecione uma prova</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="edit-race-name">Nome da Prova:</label>
+                        <input type="text" id="edit-race-name">
+                    </div>
+                    <div class="form-group">
+                        <label for="edit-race-date">Data da Prova:</label>
+                        <input type="date" id="edit-race-date">
+                    </div>
+                    <button id="update-race" class="action-btn edit-btn">Atualizar Prova</button>
+                    <button id="delete-race" class="action-btn delete-btn">Excluir Prova</button>
+                </div>
+                
+                <div id="result-adjustment" style="display: none;">
+                    <h4>Editar/Excluir Resultado</h4>
+                    <div class="form-group">
+                        <label for="select-result">Selecione o Resultado:</label>
+                        <select id="select-result">
+                            <option value="">Selecione um resultado</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="edit-result-race">Prova:</label>
+                        <select id="edit-result-race">
+                            <option value="">Selecione uma prova</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="edit-result-athlete">Atleta:</label>
+                        <select id="edit-result-athlete">
+                            <option value="">Selecione um atleta</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="edit-result-category">Categoria:</label>
+                        <input type="text" id="edit-result-category" readonly>
+                    </div>
+                    <div class="form-group">
+                        <label for="edit-result-position">Colocação:</label>
+                        <input type="number" id="edit-result-position" min="1" max="10">
+                    </div>
+                    <button id="update-result" class="action-btn edit-btn">Atualizar Resultado</button>
+                    <button id="delete-result" class="action-btn delete-btn">Excluir Resultado</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Modal de login -->
+    <div id="login-modal" class="modal">
+        <div class="modal-content">
+            <span class="close">&times;</span>
+            <h2>Login Administrativo</h2>
+            <div class="form-group">
+                <label for="email">Email:</label>
+                <input type="email" id="email" required>
+            </div>
+            <div class="form-group">
+                <label for="password">Senha:</label>
+                <input type="password" id="password" required>
+            </div>
+            <button id="confirm-login-btn">Login</button>
+            <p id="login-error" style="color: red; display: none;">Email ou senha incorretos.</p>
+        </div>
+    </div>
+    
+    <script>
+        // Configuração do Firebase
+        const firebaseConfig = {
+            apiKey: "AIzaSyClzqFmEL9y_ugHnC7V4DnFiANX6RLDYzc",
+            authDomain: "teste-c702e.firebaseapp.com",
+            databaseURL: "https://teste-c702e-default-rtdb.firebaseio.com",
+            projectId: "teste-c702e",
+            storageBucket: "teste-c702e.appspot.com",
+            messagingSenderId: "478905955045",
+            appId: "1:478905955045:web:3ba118957038593fe85a0c"
+        };
+        
+        // Inicializar Firebase
+        firebase.initializeApp(firebaseConfig);
+        const database = firebase.database();
+        const auth = firebase.auth();
+        
+        // Variáveis globais
+        let isAdmin = false;
+        let athletes = {};
+        let races = {};
+        let results = {};
+        
+        // Pontuação por colocação
+        const pointsSystem = {
+            1: 20,
+            2: 17,
+            3: 15,
+            4: 13,
+            5: 11,
+            6: 9,
+            7: 7,
+            8: 5,
+            9: 3,
+            10: 1
+        };
+        
+        // Categorias
+        const categories = {
+            male: ["Sub40", "Sub50", "Sub60", "60+", "Iniciantes"],
+            female: ["Feminino Open", "MTB Open"]
+        };
+
+        const filterCategories = {
+            male: ["Sub40", "Sub50", "Sub60", "60+", "Iniciantes"],
+            female: ["Feminino Open", "MTB Open"],
+            all: ["Sub40", "Sub50", "Sub60", "60+", "Iniciantes", "Feminino Open", "MTB Open"]
+        };
+        
+        // Elementos do DOM
+        const loginBtn = document.getElementById('login-btn');
+        const logoutBtn = document.getElementById('logout-btn');
+        const adminPanel = document.getElementById('admin-panel');
+        const loginModal = document.getElementById('login-modal');
+        const emailInput = document.getElementById('email');
+        const passwordInput = document.getElementById('password');
+        const confirmLoginBtn = document.getElementById('confirm-login-btn');
+        const loginError = document.getElementById('login-error');
+        const closeButtons = document.getElementsByClassName('close');
+        
+        // Filtros
+        const yearFilter = document.getElementById('year');
+        const genderFilter = document.getElementById('gender');
+        const categoryFilter = document.getElementById('category');
+        const ageFilter = document.getElementById('age');
+        const applyFiltersBtn = document.getElementById('apply-filters');
+        const rankingTitle = document.getElementById('ranking-title');
+        const rankingBody = document.getElementById('ranking-body');
+        
+        // Tabs
+        const tabs = document.querySelectorAll('.tab');
+        const tabContents = document.querySelectorAll('.tab-content');
+        
+        // Formulário de atletas
+        const athleteNameInput = document.getElementById('athlete-name');
+        const athleteGenderInput = document.getElementById('athlete-gender');
+        const athleteCategoryInput = document.getElementById('athlete-category');
+        const athleteBirthdateInput = document.getElementById('athlete-birthdate');
+        const saveAthleteBtn = document.getElementById('save-athlete');
+        const athletesList = document.getElementById('athletes-list');
+        
+        // Formulário de provas
+        const raceNameInput = document.getElementById('race-name');
+        const raceDateInput = document.getElementById('race-date');
+        const saveRaceBtn = document.getElementById('save-race');
+        const racesList = document.getElementById('races-list');
+        
+        // Formulário de resultados
+        const resultRaceInput = document.getElementById('result-race');
+        const resultAthleteInput = document.getElementById('result-athlete');
+        const resultCategoryInput = document.getElementById('result-category');
+        const resultPositionInput = document.getElementById('result-position');
+        const saveResultBtn = document.getElementById('save-result');
+        const resultsList = document.getElementById('results-list');
+        
+        // Ajustes
+        const adjustmentType = document.getElementById('adjustment-type');
+        const athleteAdjustment = document.getElementById('athlete-adjustment');
+        const raceAdjustment = document.getElementById('race-adjustment');
+        const resultAdjustment = document.getElementById('result-adjustment');
+        const selectAthlete = document.getElementById('select-athlete');
+        const editAthleteName = document.getElementById('edit-athlete-name');
+        const editAthleteGender = document.getElementById('edit-athlete-gender');
+        const editAthleteCategory = document.getElementById('edit-athlete-category');
+        const editAthleteBirthdate = document.getElementById('edit-athlete-birthdate');
+        const updateAthleteBtn = document.getElementById('update-athlete');
+        const deleteAthleteBtn = document.getElementById('delete-athlete');
+        const selectRace = document.getElementById('select-race');
+        const editRaceName = document.getElementById('edit-race-name');
+        const editRaceDate = document.getElementById('edit-race-date');
+        const updateRaceBtn = document.getElementById('update-race');
+        const deleteRaceBtn = document.getElementById('delete-race');
+        const selectResult = document.getElementById('select-result');
+        const editResultRace = document.getElementById('edit-result-race');
+        const editResultAthlete = document.getElementById('edit-result-athlete');
+        const editResultCategory = document.getElementById('edit-result-category');
+        const editResultPosition = document.getElementById('edit-result-position');
+        const updateResultBtn = document.getElementById('update-result');
+        const deleteResultBtn = document.getElementById('delete-result');
+        
+        // NOVA FUNÇÃO: Atualizar filtro de categorias
+        function updateCategoryFilter() {
+            categoryFilter.innerHTML = '<option value="all">Todas</option>';
+            const gender = genderFilter.value;
+            
+            if (gender && filterCategories[gender]) {
+                filterCategories[gender].forEach(category => {
+                    const option = document.createElement('option');
+                    option.value = category;
+                    option.textContent = category;
+                    categoryFilter.appendChild(option);
+                });
+            }
+        }
+
+       // Inicializar a aplicação
+        function initApp() {
+            // Verificar estado de autenticação
+            auth.onAuthStateChanged(user => {
+                if (user && user.email === "ruc@ruc.com") {
+                    isAdmin = true;
+                    adminPanel.style.display = 'block';
+                    loginBtn.textContent = 'Admin Logado';
+                    loginBtn.disabled = true;
+                    loadData();
+                } else {
+                    isAdmin = false;
+                    adminPanel.style.display = 'none';
+                    loginBtn.textContent = 'Login Admin';
+                    loginBtn.disabled = false;
+                    loadData();
+                }
+            });
+            
+            // Carregar dados em tempo real
+            database.ref('athletes').on('value', snapshot => {
+                athletes = snapshot.val() || {};
+                updateAthletesDropdown();
+                updateSelectAthleteDropdown();
+                renderAthletesList();
+                calculateRanking();
+            });
+            
+            database.ref('races').on('value', snapshot => {
+                races = snapshot.val() || {};
+                updateRacesDropdown();
+                updateSelectRaceDropdown();
+                renderRacesList();
+                calculateRanking();
+            });
+            
+            database.ref('results').on('value', snapshot => {
+                results = snapshot.val() || {};
+                updateSelectResultDropdown();
+                renderResultsList();
+                calculateRanking();
+            });
+            
+            // Event listeners
+            loginBtn.addEventListener('click', openLoginModal);
+            logoutBtn.addEventListener('click', logoutAdmin);
+            confirmLoginBtn.addEventListener('click', loginAdmin);
+            applyFiltersBtn.addEventListener('click', calculateRanking);
+            genderFilter.addEventListener('change', updateCategoryFilter); // NOVO
+
+            // Tabs
+            tabs.forEach(tab => {
+                tab.addEventListener('click', () => {
+                    tabs.forEach(t => t.classList.remove('active'));
+                    tabContents.forEach(c => c.classList.remove('active'));
+                    
+                    tab.classList.add('active');
+                    document.getElementById(`${tab.dataset.tab}-tab`).classList.add('active');
+                });
+            });
+            
+            // Formulário de atletas
+            saveAthleteBtn.addEventListener('click', saveAthlete);
+            athleteGenderInput.addEventListener('change', updateCategoryDropdown);
+            
+            // Formulário de provas
+            saveRaceBtn.addEventListener('click', saveRace);
+            
+            // Formulário de resultados
+            saveResultBtn.addEventListener('click', saveResult);
+            resultAthleteInput.addEventListener('change', updateResultCategory);
+            resultRaceInput.addEventListener('change', updateResultCategory);
+            
+            // Ajustes
+            adjustmentType.addEventListener('change', showAdjustmentForm);
+            selectAthlete.addEventListener('change', fillAthleteForm);
+            updateAthleteBtn.addEventListener('click', updateAthlete);
+            deleteAthleteBtn.addEventListener('click', deleteAthlete);
+            selectRace.addEventListener('change', fillRaceForm);
+            updateRaceBtn.addEventListener('click', updateRace);
+            deleteRaceBtn.addEventListener('click', deleteRace);
+            selectResult.addEventListener('change', fillResultForm);
+            updateResultBtn.addEventListener('click', updateResult);
+            deleteResultBtn.addEventListener('click', deleteResult);
+            editResultAthlete.addEventListener('change', updateEditResultCategory);
+            
+            // Fechar modais ao clicar no X
+            for (let i = 0; i < closeButtons.length; i++) {
+                closeButtons[i].addEventListener('click', function() {
+                    this.closest('.modal').style.display = 'none';
+                });
+            }
+            
+            // Fechar modais ao clicar fora
+            window.addEventListener('click', function(event) {
+                if (event.target.className === 'modal') {
+                    event.target.style.display = 'none';
+                }
+            });
+            
+            // Inicializar dropdowns
+            updateCategoryDropdown();
+            updateCategoryFilter(); // NOVO
+            updateAthletesDropdown();
+            updateRacesDropdown();
+        }
+        
+        // Carregar dados iniciais
+        function loadData() {
+            database.ref('athletes').once('value').then(snapshot => {
+                athletes = snapshot.val() || {};
+                updateAthletesDropdown();
+                updateSelectAthleteDropdown();
+                renderAthletesList();
+            });
+            
+            database.ref('races').once('value').then(snapshot => {
+                races = snapshot.val() || {};
+                updateRacesDropdown();
+                updateSelectRaceDropdown();
+                renderRacesList();
+            });
+            
+            database.ref('results').once('value').then(snapshot => {
+                results = snapshot.val() || {};
+                updateSelectResultDropdown();
+                renderResultsList();
+                calculateRanking();
+            });
+        }
+        
+        // Atualizar dropdown de categorias baseado no gênero selecionado
+        function updateCategoryDropdown() {
+            athleteCategoryInput.innerHTML = '<option value="">Selecione</option>';
+            editAthleteCategory.innerHTML = '<option value="">Selecione</option>';
+            const gender = athleteGenderInput.value;
+            
+            if (gender && categories[gender]) {
+                categories[gender].forEach(category => {
+                    const option = document.createElement('option');
+                    option.value = category;
+                    option.textContent = category;
+                    athleteCategoryInput.appendChild(option);
+                    
+                    const editOption = document.createElement('option');
+                    editOption.value = category;
+                    editOption.textContent = category;
+                    editAthleteCategory.appendChild(editOption);
+                });
+            }
+        }
+        
+        // Atualizar dropdown de atletas
+        function updateAthletesDropdown() {
+            resultAthleteInput.innerHTML = '<option value="">Selecione um atleta</option>';
+            editResultAthlete.innerHTML = '<option value="">Selecione um atleta</option>';
+            
+            for (const athleteId in athletes) {
+                const athlete = athletes[athleteId];
+                
+                const option = document.createElement('option');
+                option.value = athleteId;
+                option.textContent = athlete.name;
+                resultAthleteInput.appendChild(option);
+                
+                const editOption = document.createElement('option');
+                editOption.value = athleteId;
+                editOption.textContent = athlete.name;
+                editResultAthlete.appendChild(editOption);
+            }
+        }
+        
+        // Atualizar dropdown de seleção de atletas para ajustes
+        function updateSelectAthleteDropdown() {
+            selectAthlete.innerHTML = '<option value="">Selecione um atleta</option>';
+            
+            for (const athleteId in athletes) {
+                const athlete = athletes[athleteId];
+                const option = document.createElement('option');
+                option.value = athleteId;
+                option.textContent = athlete.name;
+                selectAthlete.appendChild(option);
+            }
+        }
+        
+        // Atualizar dropdown de provas
+        function updateRacesDropdown() {
+            resultRaceInput.innerHTML = '<option value="">Selecione uma prova</option>';
+            editResultRace.innerHTML = '<option value="">Selecione uma prova</option>';
+            
+            for (const raceId in races) {
+                const race = races[raceId];
+                
+                const option = document.createElement('option');
+                option.value = raceId;
+                option.textContent = race.name;
+                resultRaceInput.appendChild(option);
+                
+                const editOption = document.createElement('option');
+                editOption.value = raceId;
+                editOption.textContent = race.name;
+                editResultRace.appendChild(editOption);
+            }
+        }
+        
+        // Atualizar dropdown de seleção de provas para ajustes
+        function updateSelectRaceDropdown() {
+            selectRace.innerHTML = '<option value="">Selecione uma prova</option>';
+            
+            for (const raceId in races) {
+                const race = races[raceId];
+                const option = document.createElement('option');
+                option.value = raceId;
+                option.textContent = race.name;
+                selectRace.appendChild(option);
+            }
+        }
+        
+        // Atualizar dropdown de seleção de resultados para ajustes
+        function updateSelectResultDropdown() {
+            selectResult.innerHTML = '<option value="">Selecione um resultado</option>';
+            
+            for (const resultId in results) {
+                const result = results[resultId];
+                const race = races[result.raceId];
+                const athlete = athletes[result.athleteId];
+                
+                if (race && athlete) {
+                    const option = document.createElement('option');
+                    option.value = resultId;
+                    option.textContent = `${athlete.name} - ${race.name} (${result.position}º lugar)`;
+                    selectResult.appendChild(option);
+                }
+            }
+        }
+        
+        // Atualizar categoria do resultado baseado no atleta selecionado
+        function updateResultCategory() {
+            const athleteId = resultAthleteInput.value;
+            
+            if (athleteId && athletes[athleteId]) {
+                resultCategoryInput.value = athletes[athleteId].category;
+            } else {
+                resultCategoryInput.value = '';
+            }
+        }
+        
+        // Atualizar categoria do resultado editado baseado no atleta selecionado
+        function updateEditResultCategory() {
+            const athleteId = editResultAthlete.value;
+            
+            if (athleteId && athletes[athleteId]) {
+                editResultCategory.value = athletes[athleteId].category;
+            } else {
+                editResultCategory.value = '';
+            }
+        }
+        
+        // Renderizar lista de atletas
+        function renderAthletesList() {
+            athletesList.innerHTML = '';
+            
+            for (const athleteId in athletes) {
+                const athlete = athletes[athleteId];
+                const row = document.createElement('tr');
+                
+                const age = calculateAge(athlete.birthdate);
+                
+                row.innerHTML = `
+                    <td>${athlete.name}</td>
+                    <td>${athlete.gender === 'male' ? 'Masculino' : 'Feminino'}</td>
+                    <td>${athlete.category}</td>
+                    <td>${age} anos</td>
+                    <td>
+                        <button class="action-btn edit-btn" data-id="${athleteId}">Editar</button>
+                        <button class="action-btn delete-btn" data-id="${athleteId}">Excluir</button>
+                    </td>
+                `;
+                
+                athletesList.appendChild(row);
+            }
+            
+            // Adicionar event listeners para os botões de editar/excluir
+            document.querySelectorAll('#athletes-list .edit-btn').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    const athleteId = this.getAttribute('data-id');
+                    selectAthleteForEdit(athleteId);
+                });
+            });
+            
+            document.querySelectorAll('#athletes-list .delete-btn').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    const athleteId = this.getAttribute('data-id');
+                    if (confirm('Tem certeza que deseja excluir este atleta?')) {
+                        deleteAthleteById(athleteId);
+                    }
+                });
+            });
+        }
+        
+        // Renderizar lista de provas
+        function renderRacesList() {
+            racesList.innerHTML = '';
+            
+            for (const raceId in races) {
+                const race = races[raceId];
+                const row = document.createElement('tr');
+                
+                const raceDate = new Date(race.date);
+                const formattedDate = raceDate.toLocaleDateString('pt-BR');
+                
+                row.innerHTML = `
+                    <td>${race.name}</td>
+                    <td>${formattedDate}</td>
+                    <td>
+                        <button class="action-btn edit-btn" data-id="${raceId}">Editar</button>
+                        <button class="action-btn delete-btn" data-id="${raceId}">Excluir</button>
+                    </td>
+                `;
+                
+                racesList.appendChild(row);
+            }
+            
+            // Adicionar event listeners para os botões de editar/excluir
+            document.querySelectorAll('#races-list .edit-btn').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    const raceId = this.getAttribute('data-id');
+                    selectRaceForEdit(raceId);
+                });
+            });
+            
+            document.querySelectorAll('#races-list .delete-btn').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    const raceId = this.getAttribute('data-id');
+                    if (confirm('Tem certeza que deseja excluir esta prova?')) {
+                        deleteRaceById(raceId);
+                    }
+                });
+            });
+        }
+        
+        // Renderizar lista de resultados
+        function renderResultsList() {
+            resultsList.innerHTML = '';
+            
+            for (const resultId in results) {
+                const result = results[resultId];
+                const race = races[result.raceId];
+                const athlete = athletes[result.athleteId];
+                
+                if (race && athlete) {
+                    const row = document.createElement('tr');
+                    const raceDate = new Date(race.date);
+                    const formattedDate = raceDate.toLocaleDateString('pt-BR');
+                    const points = pointsSystem[result.position] || 0;
+                    
+                    row.innerHTML = `
+                        <td>${race.name} (${formattedDate})</td>
+                        <td>${athlete.name}</td>
+                        <td>${athlete.category}</td>
+                        <td>${result.position}º lugar</td>
+                        <td>${points} pontos</td>
+                        <td>
+                            <button class="action-btn edit-btn" data-id="${resultId}">Editar</button>
+                            <button class="action-btn delete-btn" data-id="${resultId}">Excluir</button>
+                        </td>
+                    `;
+                    
+                    resultsList.appendChild(row);
+                }
+            }
+            
+            // Adicionar event listeners para os botões de editar/excluir
+            document.querySelectorAll('#results-list .edit-btn').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    const resultId = this.getAttribute('data-id');
+                    selectResultForEdit(resultId);
+                });
+            });
+            
+            document.querySelectorAll('#results-list .delete-btn').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    const resultId = this.getAttribute('data-id');
+                    if (confirm('Tem certeza que deseja excluir este resultado?')) {
+                        deleteResultById(resultId);
+                    }
+                });
+            });
+        }
+        
+        // Calcular ranking com base nos filtros
+        function calculateRanking() {
+            const year = yearFilter.value;
+            const gender = genderFilter.value;
+            const category = categoryFilter.value;
+            const age = ageFilter.value;
+            
+            // Calcular pontos por atleta
+            const athletePoints = {};
+            
+            for (const resultId in results) {
+                const result = results[resultId];
+                const race = races[result.raceId];
+                const athlete = athletes[result.athleteId];
+                
+                if (!race || !athlete) continue;
+                
+                // Verificar se a prova é do ano selecionado
+                const raceYear = new Date(race.date).getFullYear().toString();
+                if (raceYear !== year) continue;
+                
+                // Aplicar filtros
+                if (gender !== 'all' && athlete.gender !== gender) continue;
+                if (category !== 'all' && athlete.category !== category) continue;
+                
+                // Calcular idade do atleta na data da prova
+                const raceDate = new Date(race.date);
+                const birthDate = new Date(athlete.birthdate);
+                let ageAtRace = raceDate.getFullYear() - birthDate.getFullYear();
+                const monthDiff = raceDate.getMonth() - birthDate.getMonth();
+                
+                if (monthDiff < 0 || (monthDiff === 0 && raceDate.getDate() < birthDate.getDate())) {
+                    ageAtRace--;
+                }
+                
+                // Aplicar filtro de idade
+                if (age !== 'all') {
+                    if (age === 'sub40' && ageAtRace >= 40) continue;
+                    if (age === 'sub50' && (ageAtRace < 40 || ageAtRace >= 50)) continue;
+                    if (age === 'sub60' && (ageAtRace < 50 || ageAtRace >= 60)) continue;
+                    if (age === '60+' && ageAtRace < 60) continue;
+                }
+                
+                // Calcular pontos
+                const points = pointsSystem[result.position] || 0;
+                
+                if (!athletePoints[result.athleteId]) {
+                    athletePoints[result.athleteId] = {
+                        points: 0,
+                        races: 0,
+                        athlete: athlete
+                    };
+                }
+                
+                athletePoints[result.athleteId].points += points;
+                athletePoints[result.athleteId].races++;
+            }
+            
+            // Converter para array e ordenar por pontos
+            const rankingArray = Object.entries(athletePoints).map(([athleteId, data]) => ({
+                athleteId,
+                ...data
+            }));
+            
+            rankingArray.sort((a, b) => b.points - a.points);
+            
+            // Atualizar título do ranking
+            updateRankingTitle(year, gender, category, age);
+            
+            // Renderizar ranking
+            renderRanking(rankingArray);
+        }
+        
+        // Atualizar título do ranking com base nos filtros
+        function updateRankingTitle(year, gender, category, age) {
+            let title = `Ranking ${year}`;
+            
+            if (gender !== 'all') {
+                title += ` - ${gender === 'male' ? 'Masculino' : 'Feminino'}`;
+            }
+            
+            if (category !== 'all') {
+                title += ` - ${category}`;
+            }
+            
+            if (age !== 'all') {
+                title += ` - ${getAgeLabel(age)}`;
+            }
+            
+            rankingTitle.textContent = title;
+        }
+        
+        // Obter label para o filtro de idade
+        function getAgeLabel(age) {
+            const ageLabels = {
+                'sub40': 'Sub40',
+                'sub50': 'Sub50',
+                'sub60': 'Sub60',
+                '60+': '60+'
+            };
+            return ageLabels[age] || age;
+        }
+        
+        // Renderizar tabela de ranking
+        function renderRanking(rankingArray) {
+            rankingBody.innerHTML = '';
+            
+            if (rankingArray.length === 0) {
+                const row = document.createElement('tr');
+                row.innerHTML = '<td colspan="5" style="text-align: center;">Nenhum resultado encontrado com os filtros selecionados</td>';
+                rankingBody.appendChild(row);
+                return;
+            }
+            
+            rankingArray.forEach((item, index) => {
+                const row = document.createElement('tr');
+                const athlete = item.athlete;
+                const age = calculateAge(athlete.birthdate);
+                
+                row.innerHTML = `
+                    <td>${index + 1}º</td>
+                    <td>${athlete.name}</td>
+                    <td>${athlete.category}</td>
+                    <td>${item.points}</td>
+                    <td>${item.races}</td>
+                `;
+                
+                rankingBody.appendChild(row);
+            });
+        }
+        
+        // Calcular idade com base na data de nascimento
+        function calculateAge(birthdate) {
+            const birthDate = new Date(birthdate);
+            const today = new Date();
+            let age = today.getFullYear() - birthDate.getFullYear();
+            const monthDiff = today.getMonth() - birthDate.getMonth();
+            
+            if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
+                age--;
+            }
+            
+            return age;
+        }
+        
+        // Salvar atleta
+        function saveAthlete() {
+            const name = athleteNameInput.value.trim();
+            const gender = athleteGenderInput.value;
+            const category = athleteCategoryInput.value;
+            const birthdate = athleteBirthdateInput.value;
+            
+            if (!name || !gender || !category || !birthdate) {
+                alert('Por favor, preencha todos os campos.');
+                return;
+            }
+            
+            const athleteData = {
+                name,
+                gender,
+                category,
+                birthdate
+            };
+            
+            database.ref('athletes').push(athleteData)
+                .then(() => {
+                    athleteNameInput.value = '';
+                    athleteGenderInput.value = '';
+                    athleteCategoryInput.value = '';
+                    athleteBirthdateInput.value = '';
+                    alert('Atleta cadastrado com sucesso!');
+                })
+                .catch(error => {
+                    console.error('Erro ao cadastrar atleta:', error);
+                    alert('Ocorreu um erro ao cadastrar o atleta.');
+                });
+        }
+        
+        // Salvar prova
+        function saveRace() {
+            const name = raceNameInput.value.trim();
+            const date = raceDateInput.value;
+            
+            if (!name || !date) {
+                alert('Por favor, preencha todos os campos.');
+                return;
+            }
+            
+            const raceData = {
+                name,
+                date
+            };
+            
+            database.ref('races').push(raceData)
+                .then(() => {
+                    raceNameInput.value = '';
+                    raceDateInput.value = '';
+                    alert('Prova cadastrada com sucesso!');
+                })
+                .catch(error => {
+                    console.error('Erro ao cadastrar prova:', error);
+                    alert('Ocorreu um erro ao cadastrar a prova.');
+                });
+        }
+        
+        // Salvar resultado
+        function saveResult() {
+            const raceId = resultRaceInput.value;
+            const athleteId = resultAthleteInput.value;
+            const position = parseInt(resultPositionInput.value);
+            
+            if (!raceId || !athleteId || !position || position < 1 || position > 10) {
+                alert('Por favor, preencha todos os campos corretamente.');
+                return;
+            }
+            
+            const resultData = {
+                raceId,
+                athleteId,
+                position,
+                category: resultCategoryInput.value
+            };
+            
+            database.ref('results').push(resultData)
+                .then(() => {
+                    resultRaceInput.value = '';
+                    resultAthleteInput.value = '';
+                    resultPositionInput.value = '';
+                    resultCategoryInput.value = '';
+                    alert('Resultado cadastrado com sucesso!');
+                })
+                .catch(error => {
+                    console.error('Erro ao cadastrar resultado:', error);
+                    alert('Ocorreu um erro ao cadastrar o resultado.');
+                });
+        }
+        
+        // Mostrar formulário de ajuste correto
+        function showAdjustmentForm() {
+            athleteAdjustment.style.display = 'none';
+            raceAdjustment.style.display = 'none';
+            resultAdjustment.style.display = 'none';
+            
+            const type = adjustmentType.value;
+            
+            if (type === 'athlete') {
+                athleteAdjustment.style.display = 'block';
+            } else if (type === 'race') {
+                raceAdjustment.style.display = 'block';
+            } else if (type === 'result') {
+                resultAdjustment.style.display = 'block';
+            }
+        }
+        
+        // Preencher formulário de atleta para edição
+        function fillAthleteForm() {
+            const athleteId = selectAthlete.value;
+            
+            if (athleteId && athletes[athleteId]) {
+                const athlete = athletes[athleteId];
+                editAthleteName.value = athlete.name;
+                editAthleteGender.value = athlete.gender;
+                
+                // Atualizar dropdown de categorias baseado no gênero
+                editAthleteCategory.innerHTML = '<option value="">Selecione</option>';
+                if (athlete.gender && categories[athlete.gender]) {
+                    categories[athlete.gender].forEach(category => {
+                        const option = document.createElement('option');
+                        option.value = category;
+                        option.textContent = category;
+                        editAthleteCategory.appendChild(option);
+                    });
+                }
+                
+                editAthleteCategory.value = athlete.category;
+                editAthleteBirthdate.value = athlete.birthdate;
+            } else {
+                editAthleteName.value = '';
+                editAthleteGender.value = '';
+                editAthleteCategory.value = '';
+                editAthleteBirthdate.value = '';
+            }
+        }
+        
+        // Preencher formulário de prova para edição
+        function fillRaceForm() {
+            const raceId = selectRace.value;
+            
+            if (raceId && races[raceId]) {
+                const race = races[raceId];
+                editRaceName.value = race.name;
+                editRaceDate.value = race.date;
+            } else {
+                editRaceName.value = '';
+                editRaceDate.value = '';
+            }
+        }
+        
+        // Preencher formulário de resultado para edição
+        function fillResultForm() {
+            const resultId = selectResult.value;
+            
+            if (resultId && results[resultId]) {
+                const result = results[resultId];
+                editResultRace.value = result.raceId;
+                editResultAthlete.value = result.athleteId;
+                editResultPosition.value = result.position;
+                
+                // Atualizar categoria baseada no atleta selecionado
+                if (result.athleteId && athletes[result.athleteId]) {
+                    editResultCategory.value = athletes[result.athleteId].category;
+                } else {
+                    editResultCategory.value = '';
+                }
+            } else {
+                editResultRace.value = '';
+                editResultAthlete.value = '';
+                editResultPosition.value = '';
+                editResultCategory.value = '';
+            }
+        }
+        
+        // Selecionar atleta para edição (quando clicado no botão Editar da lista)
+        function selectAthleteForEdit(athleteId) {
+            // Mudar para a tab de ajustes
+            tabs.forEach(t => t.classList.remove('active'));
+            tabContents.forEach(c => c.classList.remove('active'));
+            
+            document.querySelector('.tab[data-tab="adjustments"]').classList.add('active');
+            document.getElementById('adjustments-tab').classList.add('active');
+            
+            // Selecionar o tipo de ajuste para atleta
+            adjustmentType.value = 'athlete';
+            showAdjustmentForm();
+            
+            // Selecionar o atleta específico
+            selectAthlete.value = athleteId;
+            fillAthleteForm();
+        }
+        
+        // Selecionar prova para edição (quando clicado no botão Editar da lista)
+        function selectRaceForEdit(raceId) {
+            // Mudar para a tab de ajustes
+            tabs.forEach(t => t.classList.remove('active'));
+            tabContents.forEach(c => c.classList.remove('active'));
+            
+            document.querySelector('.tab[data-tab="adjustments"]').classList.add('active');
+            document.getElementById('adjustments-tab').classList.add('active');
+            
+            // Selecionar o tipo de ajuste para prova
+            adjustmentType.value = 'race';
+            showAdjustmentForm();
+            
+            // Selecionar a prova específica
+            selectRace.value = raceId;
+            fillRaceForm();
+        }
+        
+        // Selecionar resultado para edição (quando clicado no botão Editar da lista)
+        function selectResultForEdit(resultId) {
+            // Mudar para a tab de ajustes
+            tabs.forEach(t => t.classList.remove('active'));
+            tabContents.forEach(c => c.classList.remove('active'));
+            
+            document.querySelector('.tab[data-tab="adjustments"]').classList.add('active');
+            document.getElementById('adjustments-tab').classList.add('active');
+            
+            // Selecionar o tipo de ajuste para resultado
+            adjustmentType.value = 'result';
+            showAdjustmentForm();
+            
+            // Selecionar o resultado específico
+            selectResult.value = resultId;
+            fillResultForm();
+        }
+        
+        // Atualizar atleta
+        function updateAthlete() {
+            const athleteId = selectAthlete.value;
+            const name = editAthleteName.value.trim();
+            const gender = editAthleteGender.value;
+            const category = editAthleteCategory.value;
+            const birthdate = editAthleteBirthdate.value;
+            
+            if (!athleteId || !name || !gender || !category || !birthdate) {
+                alert('Por favor, preencha todos os campos.');
+                return;
+            }
+            
+            const athleteData = {
+                name,
+                gender,
+                category,
+                birthdate
+            };
+            
+            database.ref(`athletes/${athleteId}`).update(athleteData)
+                .then(() => {
+                    alert('Atleta atualizado com sucesso!');
+                })
+                .catch(error => {
+                    console.error('Erro ao atualizar atleta:', error);
+                    alert('Ocorreu um erro ao atualizar o atleta.');
+                });
+        }
+        
+        // Excluir atleta
+        function deleteAthlete() {
+            const athleteId = selectAthlete.value;
+            
+            if (!athleteId) {
+                alert('Por favor, selecione um atleta para excluir.');
+                return;
+            }
+            
+            if (confirm('Tem certeza que deseja excluir este atleta? Esta ação não pode ser desfeita.')) {
+                deleteAthleteById(athleteId);
+            }
+        }
+        
+        // Excluir atleta por ID
+        function deleteAthleteById(athleteId) {
+            database.ref(`athletes/${athleteId}`).remove()
+                .then(() => {
+                    alert('Atleta excluído com sucesso!');
+                    
+                    // Também precisamos excluir todos os resultados associados a este atleta
+                    const updates = {};
+                    for (const resultId in results) {
+                        if (results[resultId].athleteId === athleteId) {
+                            updates[`results/${resultId}`] = null;
+                        }
+                    }
+                    
+                    if (Object.keys(updates).length > 0) {
+                        database.ref().update(updates);
+                    }
+                })
+                .catch(error => {
+                    console.error('Erro ao excluir atleta:', error);
+                    alert('Ocorreu um erro ao excluir o atleta.');
+                });
+        }
+        
+        // Atualizar prova
+        function updateRace() {
+            const raceId = selectRace.value;
+            const name = editRaceName.value.trim();
+            const date = editRaceDate.value;
+            
+            if (!raceId || !name || !date) {
+                alert('Por favor, preencha todos os campos.');
+                return;
+            }
+            
+            const raceData = {
+                name,
+                date
+            };
+            
+            database.ref(`races/${raceId}`).update(raceData)
+                .then(() => {
+                    alert('Prova atualizada com sucesso!');
+                })
+                .catch(error => {
+                    console.error('Erro ao atualizar prova:', error);
+                    alert('Ocorreu um erro ao atualizar a prova.');
+                });
+        }
+        
+        // Excluir prova
+        function deleteRace() {
+            const raceId = selectRace.value;
+            
+            if (!raceId) {
+                alert('Por favor, selecione uma prova para excluir.');
+                return;
+            }
+            
+            if (confirm('Tem certeza que deseja excluir esta prova? Todos os resultados associados também serão excluídos.')) {
+                deleteRaceById(raceId);
+            }
+        }
+        
+        // Excluir prova por ID
+        function deleteRaceById(raceId) {
+            database.ref(`races/${raceId}`).remove()
+                .then(() => {
+                    alert('Prova excluída com sucesso!');
+                    
+                    // Também precisamos excluir todos os resultados associados a esta prova
+                    const updates = {};
+                    for (const resultId in results) {
+                        if (results[resultId].raceId === raceId) {
+                            updates[`results/${resultId}`] = null;
+                        }
+                    }
+                    
+                    if (Object.keys(updates).length > 0) {
+                        database.ref().update(updates);
+                    }
+                })
+                .catch(error => {
+                    console.error('Erro ao excluir prova:', error);
+                    alert('Ocorreu um erro ao excluir a prova.');
+                });
+        }
+        
+        // Atualizar resultado
+        function updateResult() {
+            const resultId = selectResult.value;
+            const raceId = editResultRace.value;
+            const athleteId = editResultAthlete.value;
+            const position = parseInt(editResultPosition.value);
+            
+            if (!resultId || !raceId || !athleteId || !position || position < 1 || position > 10) {
+                alert('Por favor, preencha todos os campos corretamente.');
+                return;
+            }
+            
+            const resultData = {
+                raceId,
+                athleteId,
+                position,
+                category: editResultCategory.value
+            };
+            
+            database.ref(`results/${resultId}`).update(resultData)
+                .then(() => {
+                    alert('Resultado atualizado com sucesso!');
+                })
+                .catch(error => {
+                    console.error('Erro ao atualizar resultado:', error);
+                    alert('Ocorreu um erro ao atualizar o resultado.');
+                });
+        }
+        
+        // Excluir resultado
+        function deleteResult() {
+            const resultId = selectResult.value;
+            
+            if (!resultId) {
+                alert('Por favor, selecione um resultado para excluir.');
+                return;
+            }
+            
+            if (confirm('Tem certeza que deseja excluir este resultado?')) {
+                deleteResultById(resultId);
+            }
+        }
+        
+        // Excluir resultado por ID
+        function deleteResultById(resultId) {
+            database.ref(`results/${resultId}`).remove()
+                .then(() => {
+                    alert('Resultado excluído com sucesso!');
+                })
+                .catch(error => {
+                    console.error('Erro ao excluir resultado:', error);
+                    alert('Ocorreu um erro ao excluir o resultado.');
+                });
+        }
+        
+        // Abrir modal de login
+        function openLoginModal() {
+            loginModal.style.display = 'block';
+            loginError.style.display = 'none';
+            emailInput.value = '';
+            passwordInput.value = '';
+        }
+        
+        // Login do administrador
+        function loginAdmin() {
+            const email = emailInput.value.trim();
+            const password = passwordInput.value.trim();
+            
+            if (!email || !password) {
+                loginError.style.display = 'block';
+                return;
+            }
+            
+            auth.signInWithEmailAndPassword(email, password)
+                .then(userCredential => {
+                    if (userCredential.user.email === "ruc@ruc.com") {
+                        loginModal.style.display = 'none';
+                        isAdmin = true;
+                        adminPanel.style.display = 'block';
+                        loginBtn.textContent = 'Admin Logado';
+                        loginBtn.disabled = true;
+                        loadData();
+                    } else {
+                        throw new Error('Acesso não autorizado');
+                    }
+                })
+                .catch(error => {
+                    console.error('Erro no login:', error);
+                    loginError.style.display = 'block';
+                });
+        }
+        
+        // Logout do administrador
+        function logoutAdmin() {
+            auth.signOut()
+                .then(() => {
+                    isAdmin = false;
+                    adminPanel.style.display = 'none';
+                    loginBtn.textContent = 'Login Admin';
+                    loginBtn.disabled = false;
+                })
+                .catch(error => {
+                    console.error('Erro no logout:', error);
+                });
+        }
+        
+        // Iniciar aplicação
+        document.addEventListener('DOMContentLoaded', initApp);
+    </script>
+</body>
+</html>
