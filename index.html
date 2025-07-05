@@ -119,6 +119,38 @@
             border-collapse: collapse;
             margin-top: 20px;
         }
+/* Responsividade para dispositivos móveis */
+@media (max-width: 768px) {
+    table, thead, tbody, th, td, tr {
+        font-size: 14px;
+    }
+
+    .filters {
+        flex-direction: column;
+    }
+
+    .tab {
+        flex: 1 1 auto;
+        font-size: 14px;
+        text-align: center;
+    }
+
+    .action-btn {
+        font-size: 10px;
+        padding: 4px 8px;
+    }
+
+    .ranking-header h3 {
+        font-size: 16px;
+    }
+}
+
+/* Permite rolagem horizontal nas tabelas em telas pequenas */
+.responsive-table {
+    overflow-x: auto;
+    width: 100%;
+}
+
         
         th, td {
             padding: 12px;
@@ -298,11 +330,10 @@
         </div>
         
         <div class="ranking-header">
-            <h3 id="ranking-title">Ranking Geral</h3>
-            <button id="login-btn" class="login-btn">Login Admin</button>
-        </div>
+    <h3 id="ranking-title">Ranking Geral</h3>
+</div>
         
-        <div id="ranking-table">
+        <div id="ranking-table" class="responsive-table">
             <!-- Ranking será carregado dinamicamente -->
             <table>
                 <thead>
@@ -318,6 +349,8 @@
                     <!-- Dados serão carregados dinamicamente -->
                 </tbody>
             </table>
+<button id="login-btn" class="login-btn" style="margin-top: 20px;">Login Admin</button>
+
         </div>
         
         <div class="admin-panel" id="admin-panel">
